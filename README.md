@@ -21,8 +21,19 @@
 ├── .trae/              # Trae AI 开发工作空间配置
 │   ├── README.md       # 工作空间说明
 │   └── rules/          # 开发规则和规范配置
-├── README.md           # 项目主文档
-└── ...                 # 应用代码和资源
+├── smart-diet-agent/   # 智能饮食助手项目
+│   ├── data/           # 数据处理脚本
+│   ├── src/            # 源代码
+│   │   ├── core/       # 核心业务引擎
+│   │   ├── agent/      # 智能体编排
+│   │   ├── api/        # API接口层
+│   │   └── common/     # 公共组件
+│   ├── frontend/       # 前端界面 (Streamlit)
+│   ├── tests/          # 单元测试
+│   ├── docker-compose.yml
+│   ├── pyproject.toml
+│   └── README.md
+└── README.md           # 项目主文档
 ```
 
 ## 🛠️ 技术栈
