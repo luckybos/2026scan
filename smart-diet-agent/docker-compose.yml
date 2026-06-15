@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库服务
+  db:
+    image: postgres:16-alpine
+    container_name: smart-diet-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-smart_diet}
+      POSTGRES_USER: ${DB_USER:-admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin} -d ${DB_NAME:-smart_diet}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - smart-diet-network
+
+  # Redis 缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: smart-diet-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - smart-diet-network
+
+  # API 服务
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: smart-diet-api
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-smart_diet}
+      - DB_USER=${DB_USER:-admin}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
+      - LLM_BASE_URL=${LLM_BASE_URL}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - smart-diet-network
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: smart-diet-frontend
+    ports:
+      - "${FRONTEND_PORT:-8501}:8501"
+    depends_on:
+      - api
+    networks:
+      - smart-diet-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  smart-diet-network:
+    driver: bridge
